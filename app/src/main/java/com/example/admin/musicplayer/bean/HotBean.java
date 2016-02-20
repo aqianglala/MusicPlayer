@@ -1,5 +1,6 @@
 package com.example.admin.musicplayer.bean;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -1505,7 +1506,7 @@ public class HotBean {
                 return songlist;
             }
 
-            public static class SonglistEntity {
+            public static class SonglistEntity implements Serializable{
                 private int albumid;
                 private String albummid;
                 private String albumpic_big;

@@ -5,11 +5,13 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -19,6 +21,7 @@ import android.widget.TextView;
 
 import com.example.admin.musicplayer.R;
 import com.example.admin.musicplayer.bean.AudioItem;
+import com.example.admin.musicplayer.bean.SearchLyric;
 import com.example.admin.musicplayer.global.BaseActivity;
 import com.example.admin.musicplayer.interfaces.Keys;
 import com.example.admin.musicplayer.interfaces.PlayService;
@@ -27,8 +30,21 @@ import com.example.admin.musicplayer.service.AudioPlayService;
 import com.example.admin.musicplayer.utils.L;
 import com.example.admin.musicplayer.utils.Utils;
 import com.example.admin.musicplayer.view.LyricView;
+import com.google.gson.Gson;
+import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.callback.Callback;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+
+import okhttp3.Call;
+import okhttp3.Response;
 
 
 public class AudioPlayerActivity extends BaseActivity implements Ui {
@@ -244,12 +260,19 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
         btn_play.setBackgroundResource(resid);
     }
 
+    private AudioItem mCurrentItem;
+
     @Override
     public void updateUI(AudioItem item) {
         L.i(TAG, "ui的方法被调用了");
         updatePlayBtnBg();
         tv_artist.setText(item.getArtist());
         sb_audio.setMax(playService.getDuration());
+        // 下载歌词，获取歌词路径
+        if(!TextUtils.isEmpty(item.getSongId())){
+            mCurrentItem=item;
+            getLyric(item.getSongId());
+        }
         lyric_view.setMusicPath(item.getPath());
         updatePlayTime();
         updatePlayModeBtnBg(playService.getCurrentPlayMode());
@@ -265,6 +288,65 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
         lyric_view.setCurrentPosition(position);
 
         handler.sendEmptyMessageDelayed(UPDATE_PLAY_TIME, 30);
+    }
+
+    public static final String lrcRootPath = Environment
+            .getExternalStorageDirectory().toString()
+            + "/MusicPlayer/Lyrics/";
+
+    // 歌词文件网络地址，歌词文件本地缓冲地址
+    public void getLyric(String songId) {
+        OkHttpUtils
+                .post()
+                .url(Keys.Url_Search_Lyric)
+                .addParams("showapi_appid", "15869")
+                .addParams("showapi_sign", "5ea357d154694ad1a58d0a8287dd6f6c")
+                .addParams("showapi_timestamp", Utils.getTimestamp())
+                .addParams("musicid", songId)
+                .tag(this)
+                .build()
+                .execute(new MyCallback());
+    }
+    private SearchLyric bean;
+    private class MyCallback extends Callback<SearchLyric> {
+
+        @Override
+        public SearchLyric parseNetworkResponse(Response response) throws Exception {
+            bean = new Gson().fromJson(response.body().string(), SearchLyric
+                    .class);
+            return bean;
+        }
+
+        @Override
+        public void onError(Call call, Exception e) {
+            L.i(TAG,e.getMessage());
+            showToast("加载失败");
+        }
+
+        @Override
+        public void onResponse(SearchLyric response) {
+            L.i(TAG,"数据长度："+response.getShowapi_res_body().getLyric());
+            //将歌词保存到本地
+            String lyric = response.getShowapi_res_body().getLyric();
+            File file = new File(lrcRootPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            String lrcPath=lrcRootPath+mCurrentItem.getArtist()+".txt";
+            PrintWriter out = null;
+            try {
+                out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(new FileOutputStream(lrcPath),
+                                "utf-8")));
+                out.write(lyric);
+                lyric_view.setMusicPath(lrcPath);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 
 }

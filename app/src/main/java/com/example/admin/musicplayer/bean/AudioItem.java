@@ -11,12 +11,23 @@ public class AudioItem implements Serializable {
     private String title;
     private String artist;
     private String path;
+    private String songId;
 
     public static AudioItem fromCursor(Cursor cursor) {
         AudioItem item = new AudioItem();
         item.setTitle(cursor.getString(1));
         item.setArtist(cursor.getString(2));
         item.setPath(cursor.getString(3));
+        return item;
+    }
+
+    public static AudioItem fromBean(HotBean.ShowapiResBodyEntity.PagebeanEntity
+            .SonglistEntity data) {
+        AudioItem item = new AudioItem();
+        item.setTitle(data.getSongname());
+        item.setArtist(data.getSingername());
+        item.setPath(data.getUrl());
+        item.setSongId(data.getSongid()+"");
         return item;
     }
 
@@ -39,5 +50,11 @@ public class AudioItem implements Serializable {
         this.path = path;
     }
 
+    public String getSongId() {
+        return songId;
+    }
 
+    public void setSongId(String songId) {
+        this.songId = songId;
+    }
 }
