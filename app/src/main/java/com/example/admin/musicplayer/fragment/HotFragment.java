@@ -90,7 +90,9 @@ public class HotFragment extends BaseFragment {
 
         @Override
         public HotBean parseNetworkResponse(Response response) throws Exception {
-            bean = new Gson().fromJson(response.body().string(), HotBean
+            String result = response.body().string();
+            L.i("result",result);
+            bean = new Gson().fromJson(result, HotBean
                     .class);
             return bean;
         }

@@ -62,7 +62,7 @@ public class LyricLoader {
         ArrayList<LyricItem> lyrics = new ArrayList<LyricItem>();
         try {
             InputStream in = new FileInputStream(lrcFile);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in, "GBK"));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
             String line;
             while ((line = reader.readLine()) != null) {
                 // System.out.println(line);
@@ -81,6 +81,7 @@ public class LyricLoader {
         }
         return lyrics;
     }
+
 
     /**
      * 解析：[01:55.10 这样的时间，解析成一个long类型的毫秒值。注：最后的毫秒值是需要乘以10的

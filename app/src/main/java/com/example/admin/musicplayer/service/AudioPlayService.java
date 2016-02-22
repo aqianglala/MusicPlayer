@@ -18,6 +18,7 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 import android.widget.RemoteViews;
 
 import com.example.admin.musicplayer.R;
@@ -145,7 +146,11 @@ public class AudioPlayService extends Service implements PlayService {
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.setOnPreparedListener(mPreparedListener);
             mMediaPlayer.setOnCompletionListener(mCompletionListener);
-            mMediaPlayer.setDataSource(this, Uri.parse(currentAudioItem.getPath()));
+            if(TextUtils.isEmpty(currentAudioItem.getSongId())){
+                mMediaPlayer.setDataSource(this, Uri.parse(currentAudioItem.getPath()));
+            }else{
+                mMediaPlayer.setDataSource(currentAudioItem.getPath());
+            }
             mMediaPlayer.prepareAsync();
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -11,7 +11,9 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.text.Html;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -36,11 +38,8 @@ import com.zhy.http.okhttp.callback.Callback;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.FileWriter;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import okhttp3.Call;
@@ -272,8 +271,9 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
         if(!TextUtils.isEmpty(item.getSongId())){
             mCurrentItem=item;
             getLyric(item.getSongId());
+        }else{
+            lyric_view.setMusicPath(item.getPath());
         }
-        lyric_view.setMusicPath(item.getPath());
         updatePlayTime();
         updatePlayModeBtnBg(playService.getCurrentPlayMode());
     }
@@ -332,21 +332,47 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
             if (!file.exists()) {
                 file.mkdirs();
             }
-            String lrcPath=lrcRootPath+mCurrentItem.getArtist()+".txt";
-            PrintWriter out = null;
+            String lrcPath=lrcRootPath+ URLEncoder.encode(mCurrentItem.getArtist())+".txt";
             try {
-                out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(new FileOutputStream(lrcPath),
-                                "utf-8")));
-                out.write(lyric);
+                FileWriter fw = new FileWriter(lrcPath, true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                String newLineLyric = newLineLyric(lyric);
+                bw.write(newLineLyric);
+                bw.close();
+                fw.close();
                 lyric_view.setMusicPath(lrcPath);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (FileNotFoundException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
+    }
+
+    /**
+     * 歌词换行的方法
+     * 1，取得“[”的索引
+     * 2，取得（第一步获取到的索引-1）的字符
+     * 3，如果该字符不为“]”，则插入换行符
+     *
+     * 以上将获取到这样一串
+     * [ti:04爸爸媽媽 Mama & Papa_mmm_Pf][ar:李荣浩][al:][by:][offset:0][00:00.87]爸爸妈妈 - 李荣浩
+     [00:01.68]词：李荣浩
+     * 然后我们把offset之前的所有标签都删除，这样就能获得正确的歌词格式
+     */
+
+    private String newLineLyric(String lyric){
+        lyric= Html.fromHtml(lyric).toString();
+        lyric= lyric.substring(lyric.indexOf("[00"));
+        char[] chars = lyric.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        for(int i=0;i<chars.length;i++){
+            if(i!=0 && chars[i]=='[' && chars[i-1]!=']'){
+                sb.append("\r\n[");
+            }else{
+                sb.append(chars[i]);
+            }
+        }
+        Log.i("换行后:",sb.toString());
+        return sb.toString();
     }
 
 }
