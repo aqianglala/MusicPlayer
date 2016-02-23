@@ -39,7 +39,6 @@ import com.zhy.http.okhttp.callback.Callback;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import okhttp3.Call;
@@ -118,6 +117,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
                 message.obj = AudioPlayerActivity.this;
                 message.replyTo = uiMessenger;
                 try {
+                    // Send a Message to this Messenger's Handler
                     playServiceMesseger.send(message);
                 } catch (RemoteException e) {
                     e.printStackTrace();
@@ -233,18 +233,10 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
                 throw new RuntimeException("见鬼吧，不知道当前是什么播放模式,currentPlayMode = " + currentPlayMode);
         }
         btn_play_mode.setBackgroundResource(resid);
+        playService.updateBtnBackground(resid);
     }
 
-    /** 播放或暂停 */
-    private void play() {
-        if (playService.isPlaying()) {
-            playService.pause();
-        } else {
-            playService.start();
-        }
 
-        updatePlayBtnBg();
-    }
 
     /** 更新播放按钮背景 */
     private void updatePlayBtnBg() {
@@ -277,6 +269,18 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
         updatePlayTime();
         updatePlayModeBtnBg(playService.getCurrentPlayMode());
     }
+
+    /** 播放或暂停 */
+    @Override
+    public void play() {
+        if (playService.isPlaying()) {
+            playService.pause();
+        } else {
+            playService.start();
+        }
+        updatePlayBtnBg();
+    }
+
 
     /** 更新播放时间 */
     private void updatePlayTime() {
@@ -332,7 +336,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
             if (!file.exists()) {
                 file.mkdirs();
             }
-            String lrcPath=lrcRootPath+ URLEncoder.encode(mCurrentItem.getArtist())+".txt";
+            String lrcPath=lrcRootPath+ mCurrentItem.getArtist()+".txt";
             try {
                 FileWriter fw = new FileWriter(lrcPath, true);
                 BufferedWriter bw = new BufferedWriter(fw);

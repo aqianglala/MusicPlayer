@@ -55,8 +55,10 @@ public class AudioPlayService extends Service implements PlayService {
     private static final int NOTIFICATION_PRE = 1;
     /** 点击了通知栏的下一首按钮 */
     private static final int NOTIFICATION_NEXT = 2;
+    /** 点击了通知栏的播放暂停按钮 */
+    private static final int NOTIFICATION_PLAY = 3;
     /** 点击了通知栏的根布局 */
-    private static final int NOTIFICATION_ROOT = 3;
+    private static final int NOTIFICATION_ROOT = 4;
     private int notificationId = 1;
     private NotificationManager notificationManager;
 
@@ -87,6 +89,8 @@ public class AudioPlayService extends Service implements PlayService {
     private ArrayList<AudioItem> audioItems;
     private int currentPosition;
     private Random random;
+    public RemoteViews remoteViews;
+    private Notification notification;
 
     @Override
     public void onCreate() {
@@ -97,6 +101,7 @@ public class AudioPlayService extends Service implements PlayService {
         super.onCreate();
     }
 
+    private boolean isPlayClick;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         L.i("AudioPlayService", "onStartCommand");
@@ -105,12 +110,19 @@ public class AudioPlayService extends Service implements PlayService {
         int what = intent.getIntExtra(Keys.WHAT, -1);
         switch (what) {
             case NOTIFICATION_PRE:
+                isPlayClick=false;
                 pre();
                 break;
             case NOTIFICATION_NEXT:
+                isPlayClick=false;
                 next();
                 break;
+            case NOTIFICATION_PLAY:
+                isPlayClick=true;
+                ui.play();
+                break;
             case NOTIFICATION_ROOT:
+                isPlayClick=false;
                 openAudioFlag = NO_OPEN_AUDIO;
                 break;
             default:
@@ -148,10 +160,12 @@ public class AudioPlayService extends Service implements PlayService {
             mMediaPlayer.setOnCompletionListener(mCompletionListener);
             if(TextUtils.isEmpty(currentAudioItem.getSongId())){
                 mMediaPlayer.setDataSource(this, Uri.parse(currentAudioItem.getPath()));
+                mMediaPlayer.prepareAsync();
+                mMediaPlayer.prepare();
             }else{
                 mMediaPlayer.setDataSource(currentAudioItem.getPath());
+                mMediaPlayer.prepare();
             }
-            mMediaPlayer.prepareAsync();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -180,6 +194,7 @@ public class AudioPlayService extends Service implements PlayService {
     @Override
     public void onDestroy() {
         L.i("AudioPlayService", "onDestroy");
+        mMediaPlayer.stop();
         super.onDestroy();
     }
 
@@ -195,6 +210,7 @@ public class AudioPlayService extends Service implements PlayService {
     public void pause() {
         if (mMediaPlayer != null) {
             mMediaPlayer.pause();
+            if(!isPlayClick)
             notificationManager.cancel(notificationId);
         }
     }
@@ -268,7 +284,9 @@ public class AudioPlayService extends Service implements PlayService {
         @Override
         public void onPrepared(MediaPlayer mp) {
             start();
-            ui.updateUI(currentAudioItem);
+            if(mMediaPlayer.isPlaying()){
+                ui.updateUI(currentAudioItem);
+            }
         }
     };
     private AudioItem currentAudioItem;
@@ -309,6 +327,12 @@ public class AudioPlayService extends Service implements PlayService {
     }
 
     @Override
+    public void updateBtnBackground(int resId) {
+        remoteViews.setImageViewResource(R.id.btn_play,resId);
+        notificationManager.notify(notificationId, notification);
+    }
+
+    @Override
     public AudioItem getCurrentAudioItem() {
         return currentAudioItem;
     }
@@ -340,16 +364,17 @@ public class AudioPlayService extends Service implements PlayService {
                 .setContentText(contentText)		// 设置通知的内容
                 .setContentIntent(contentIntent)	// 设置点击通知时要执行的Intent
                 .setContent(getRemoteViews());	// 这个方法在3.0版本才有用
-        Notification notification = builder.build();
+        notification = builder.build();
         notificationManager.notify(notificationId, notification);
     }
 
     private RemoteViews getRemoteViews() {
-        RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notification);
+        remoteViews = new RemoteViews(getPackageName(), R.layout.notification);
         remoteViews.setTextViewText(R.id.tv_title, currentAudioItem.getTitle());
         remoteViews.setTextViewText(R.id.tv_artist, currentAudioItem.getArtist());
         remoteViews.setOnClickPendingIntent(R.id.btn_pre, getServicePndingIntent(NOTIFICATION_PRE));
         remoteViews.setOnClickPendingIntent(R.id.btn_next, getServicePndingIntent(NOTIFICATION_NEXT));
+        remoteViews.setOnClickPendingIntent(R.id.btn_play, getServicePndingIntent(NOTIFICATION_PLAY));
         remoteViews.setOnClickPendingIntent(R.id.ll_root, getActivityPndingIntent(NOTIFICATION_ROOT));
         return remoteViews;
     }

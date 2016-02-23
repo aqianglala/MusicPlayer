@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/ll_root"
     android:layout_width="match_parent"
-    android:layout_height="62dp"
+    android:layout_height="64dp"
     android:orientation="horizontal" 
     android:gravity="center_vertical"
     android:paddingLeft="8dp"
@@ -25,6 +25,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
+            android:singleLine="true"
+            android:ellipsize="end"
             android:text="超级英雄"
             />
         
@@ -33,6 +35,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#77FFFFFF"
+            android:singleLine="true"
+
             android:text="邓超"
             />
         
@@ -43,6 +47,13 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:background="@drawable/icon_notification_pre"/>
+
+    <ImageButton
+        android:id="@+id/btn_play"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginLeft="16dp"
+        android:background="@drawable/btn_audio_pause_normal"/>
     
     <Button 
         android:id="@+id/btn_next"
