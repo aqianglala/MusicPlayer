@@ -12,4 +12,7 @@ public interface Ui {
     /** 播放暂停 */
     void play();
 
+    /** 播放暂停 */
+    void stopPlayBtnBg();
+
 }

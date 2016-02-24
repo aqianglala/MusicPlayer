@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnPreparedListener;
@@ -59,6 +60,8 @@ public class AudioPlayService extends Service implements PlayService {
     private static final int NOTIFICATION_PLAY = 3;
     /** 点击了通知栏的根布局 */
     private static final int NOTIFICATION_ROOT = 4;
+    /** 用户清除了通知栏 */
+    private static final int NOTIFICATION_CLEAR = 5;
     private int notificationId = 1;
     private NotificationManager notificationManager;
 
@@ -107,7 +110,10 @@ public class AudioPlayService extends Service implements PlayService {
         L.i("AudioPlayService", "onStartCommand");
         currentPlayMode = sp.getInt(Keys.CURRENT_PLAY_MODE, PLAY_MODE_ORDER);
         openAudioFlag = -1;
-        int what = intent.getIntExtra(Keys.WHAT, -1);
+        int what=-1;
+        if(intent!=null){
+            what = intent.getIntExtra(Keys.WHAT, -1);
+        }
         switch (what) {
             case NOTIFICATION_PRE:
                 isPlayClick=false;
@@ -125,10 +131,17 @@ public class AudioPlayService extends Service implements PlayService {
                 isPlayClick=false;
                 openAudioFlag = NO_OPEN_AUDIO;
                 break;
+            case NOTIFICATION_CLEAR:
+                isPlayClick=false;
+                pause();
+                ui.stopPlayBtnBg();
+                break;
             default:
-                audioItems = (ArrayList<AudioItem>) intent.getSerializableExtra(Keys.ITEM_LIST);
-
-                int currentPositionTemp = intent.getIntExtra(Keys.CURRENT_POSITION, -1);
+                int currentPositionTemp=-1;
+                if(intent!=null){
+                    audioItems = (ArrayList<AudioItem>) intent.getSerializableExtra(Keys.ITEM_LIST);
+                    currentPositionTemp = intent.getIntExtra(Keys.CURRENT_POSITION, -1);
+                }
                 if (isPlaying() && currentPosition == currentPositionTemp) {
                     // 如果音频已经在播放，并且点击进来的位置和正在播放的音频是同一个，则不要重新播放
                     openAudioFlag = NO_OPEN_AUDIO;
@@ -136,7 +149,7 @@ public class AudioPlayService extends Service implements PlayService {
                 currentPosition = currentPositionTemp;
                 break;
         }
-        return super.onStartCommand(intent, flags, startId);
+        return START_FLAG_REDELIVERY;
     }
 
     /** 打开一个音频文件 */
@@ -156,16 +169,16 @@ public class AudioPlayService extends Service implements PlayService {
 
         try {
             mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setOnPreparedListener(mPreparedListener);
-            mMediaPlayer.setOnCompletionListener(mCompletionListener);
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             if(TextUtils.isEmpty(currentAudioItem.getSongId())){
-                mMediaPlayer.setDataSource(this, Uri.parse(currentAudioItem.getPath()));
-                mMediaPlayer.prepareAsync();
-                mMediaPlayer.prepare();
+                mMediaPlayer.setDataSource(AudioPlayService.this, Uri.parse
+                        (currentAudioItem.getPath()));
             }else{
                 mMediaPlayer.setDataSource(currentAudioItem.getPath());
-                mMediaPlayer.prepare();
             }
+            mMediaPlayer.prepareAsync();
+            mMediaPlayer.setOnPreparedListener(mPreparedListener);
+//            mMediaPlayer.setOnCompletionListener(mCompletionListener);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -202,6 +215,7 @@ public class AudioPlayService extends Service implements PlayService {
     public void start() {
         if (mMediaPlayer != null) {
             mMediaPlayer.start();
+            if(!isPlayClick)
             sendNotification();
         }
     }
@@ -333,6 +347,11 @@ public class AudioPlayService extends Service implements PlayService {
     }
 
     @Override
+    public void setIsPlayClick(boolean isPlayClick) {
+        this.isPlayClick=isPlayClick;
+    }
+
+    @Override
     public AudioItem getCurrentAudioItem() {
         return currentAudioItem;
     }
@@ -348,10 +367,9 @@ public class AudioPlayService extends Service implements PlayService {
     private void sendNotification() {
         notificationManager.cancel(notificationId);
 
-        int icon = R.drawable.icon_notification;
+        int icon = R.drawable.music_default_bg;
         CharSequence tickerText = "当前正在播放：" + currentAudioItem.getTitle();
         long when = System.currentTimeMillis();
-
         CharSequence contentTitle =  currentAudioItem.getTitle();
         CharSequence contentText = currentAudioItem.getArtist();
         PendingIntent contentIntent = getActivityPndingIntent(NOTIFICATION_ROOT);
@@ -363,7 +381,8 @@ public class AudioPlayService extends Service implements PlayService {
                 .setContentTitle(contentTitle)	// 设置通知的内容标题
                 .setContentText(contentText)		// 设置通知的内容
                 .setContentIntent(contentIntent)	// 设置点击通知时要执行的Intent
-                .setContent(getRemoteViews());	// 这个方法在3.0版本才有用
+                .setContent(getRemoteViews())	// 这个方法在3.0版本才有用
+                .setDeleteIntent(getServicePndingIntent(NOTIFICATION_CLEAR));
         notification = builder.build();
         notificationManager.notify(notificationId, notification);
     }

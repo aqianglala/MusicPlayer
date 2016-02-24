@@ -9,6 +9,7 @@
     <ImageView 
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginRight="12dp"
         android:background="@drawable/music_default_bg"/>
     
     <LinearLayout 
@@ -28,6 +29,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textSize="18sp"
+                android:textColor="@color/colorPrimary"
                 android:text="标题"/>
             
         </LinearLayout>
@@ -37,6 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="16sp"
+            android:textColor="@color/colorPrimary"
             android:text="艺术家"/>
         
     </LinearLayout>

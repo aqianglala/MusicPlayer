@@ -45,6 +45,10 @@ public interface PlayService {
     /** 获取当前的播放模式 */
     void updateBtnBackground(int resId);
 
+    /** 设置当前是否是通知栏上的播放暂停按钮被点击 */
+    void setIsPlayClick(boolean isPlayClick);
+
+
     /** 获取当前正在播放的音频的JavaBean */
     AudioItem getCurrentAudioItem();
 }

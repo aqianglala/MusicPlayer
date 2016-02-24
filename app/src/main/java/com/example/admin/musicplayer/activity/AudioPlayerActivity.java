@@ -11,7 +11,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -39,6 +38,7 @@ import com.zhy.http.okhttp.callback.Callback;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 
 import okhttp3.Call;
@@ -89,6 +89,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
     private LyricView lyric_view;
     private Button btn_pre;
     private Button btn_next;
+    private Button btn_back;
 
     /** 连接服务 */
     private void connectServcie() {
@@ -130,6 +131,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
     @Override
     protected void initView(Bundle savedInstanceState) {
         setContentView(R.layout.activity_audio_player);
+        btn_back = getViewById(R.id.btn_back);
         btn_play = getViewById(R.id.btn_play);
         btn_pre = getViewById(R.id.btn_pre);
         btn_next = getViewById(R.id.btn_next);
@@ -145,6 +147,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
 
     @Override
     protected void setListener() {
+        btn_back.setOnClickListener(this);
         btn_play.setOnClickListener(this);
         btn_pre.setOnClickListener(this);
         btn_next.setOnClickListener(this);
@@ -189,16 +192,24 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_play:
+                playService.setIsPlayClick(false);
                 play();
                 break;
             case R.id.btn_pre:
+                playService.setIsPlayClick(false);
+                handler.removeCallbacksAndMessages(null);
                 playService.pre();	// 播放上一首
                 break;
             case R.id.btn_next:
+                playService.setIsPlayClick(false);
+                handler.removeCallbacksAndMessages(null);
                 playService.next();	// 播放下一首
                 break;
             case R.id.btn_play_mode:
                 switchPlayMode();
+                break;
+            case R.id.btn_back:
+                finish();
                 break;
 
             default:
@@ -233,13 +244,12 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
                 throw new RuntimeException("见鬼吧，不知道当前是什么播放模式,currentPlayMode = " + currentPlayMode);
         }
         btn_play_mode.setBackgroundResource(resid);
-        playService.updateBtnBackground(resid);
     }
 
 
 
     /** 更新播放按钮背景 */
-    private void updatePlayBtnBg() {
+    public void updatePlayBtnBg() {
         int resid;
         if (playService.isPlaying()) {
             // 如果正在播放，则显示一个暂停按钮
@@ -249,14 +259,28 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
             resid = R.drawable.selector_audio_btn_play;
         }
         btn_play.setBackgroundResource(resid);
+        playService.updateBtnBackground(resid);
+    }
+
+    /** 更新播放按钮背景 */
+    public void stopPlayBtnBg() {
+        btn_play.setBackgroundResource(R.drawable.selector_audio_btn_play);
     }
 
     private AudioItem mCurrentItem;
+
+    private void setBtnEnable(){
+        btn_play.setEnabled(true);
+        btn_next.setEnabled(true);
+        btn_pre.setEnabled(true);
+        btn_play_mode.setEnabled(true);
+    }
 
     @Override
     public void updateUI(AudioItem item) {
         L.i(TAG, "ui的方法被调用了");
         updatePlayBtnBg();
+        setBtnEnable();
         tv_artist.setText(item.getArtist());
         sb_audio.setMax(playService.getDuration());
         // 下载歌词，获取歌词路径
@@ -364,7 +388,8 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
      */
 
     private String newLineLyric(String lyric){
-        lyric= Html.fromHtml(lyric).toString();
+//        lyric= Html.fromHtml(lyric).toString();
+        lyric= URLDecoder.decode(lyric);
         lyric= lyric.substring(lyric.indexOf("[00"));
         char[] chars = lyric.toCharArray();
         StringBuilder sb = new StringBuilder();

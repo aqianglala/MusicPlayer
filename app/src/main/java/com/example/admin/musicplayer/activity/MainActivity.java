@@ -1,5 +1,7 @@
 package com.example.admin.musicplayer.activity;
 
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -7,8 +9,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.admin.musicplayer.R;
@@ -65,19 +65,19 @@ public class MainActivity extends BaseActivity {
     }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main,menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId()==R.id.action_search){
-            showToast("点击了搜索");
-        }
-        return super.onOptionsItemSelected(item);
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        getMenuInflater().inflate(R.menu.main,menu);
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        if(item.getItemId()==R.id.action_search){
+//            showToast("点击了搜索");
+//        }
+//        return super.onOptionsItemSelected(item);
+//    }
 
     private long mExitTime;
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -87,6 +87,9 @@ public class MainActivity extends BaseActivity {
                 mExitTime = System.currentTimeMillis();
             } else {
                 stopService(new Intent(this, AudioPlayService.class));
+                NotificationManager notificationManager = (NotificationManager) getSystemService
+                        (Context.NOTIFICATION_SERVICE);
+                notificationManager.cancel(1);
                 finish();
             }
             return true;

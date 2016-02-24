@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/base_bg" >
-    
+
+    <include layout="@layout/title_bar"/>
 
     <FrameLayout 
         android:layout_width="wrap_content"
@@ -73,6 +74,7 @@
             android:id="@+id/btn_play_mode"
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:enabled="false"
             android:background="@drawable/selector_audio_btn_playmode_order"/>
             
         <View style="@style/placeholder"/>
@@ -81,6 +83,7 @@
             android:id="@+id/btn_pre"
             android:layout_width="55dp"
             android:layout_height="55dp"
+            android:enabled="false"
             android:background="@drawable/selector_audio_btn_pre"/>
             
         <View style="@style/placeholder"/>
@@ -89,6 +92,7 @@
             android:id="@+id/btn_play"
             android:layout_width="55dp"
             android:layout_height="55dp"
+            android:enabled="false"
             android:background="@drawable/selector_audio_btn_play"/>
             
         <View style="@style/placeholder"/>
@@ -97,6 +101,7 @@
             android:id="@+id/btn_next"
             android:layout_width="55dp"
             android:layout_height="55dp"
+            android:enabled="false"
             android:background="@drawable/selector_audio_btn_next" />
             
         <View style="@style/placeholder"/>

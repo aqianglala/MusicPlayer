@@ -1,10 +1,14 @@
 package com.example.admin.musicplayer.fragment;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.ProgressBar;
 
 import com.example.admin.musicplayer.R;
 import com.example.admin.musicplayer.activity.AudioPlayerActivity;
@@ -30,11 +34,13 @@ import okhttp3.Response;
 public class HotFragment extends BaseFragment {
 
     private GridView mGridView;
+    private ProgressBar mProgressBar;
 
     @Override
     protected void initView(Bundle savedInstanceState) {
         setContentView(R.layout.fragment_hot);
         mGridView = getViewById(R.id.id_gridview);
+        mProgressBar = getViewById(R.id.progressbar);
     }
 
     @Override
@@ -42,11 +48,13 @@ public class HotFragment extends BaseFragment {
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ArrayList<AudioItem> audioItems = getAudioItems(mData);
-                Intent intent = new Intent(mActivity, AudioPlayerActivity.class);
-                intent.putExtra(Keys.ITEM_LIST, audioItems);
-                intent.putExtra(Keys.CURRENT_POSITION, position);
-                startActivity(intent);
+                if(isNetworkConnected(mActivity)){
+                    ArrayList<AudioItem> audioItems = getAudioItems(mData);
+                    Intent intent = new Intent(mActivity, AudioPlayerActivity.class);
+                    intent.putExtra(Keys.ITEM_LIST, audioItems);
+                    intent.putExtra(Keys.CURRENT_POSITION, position);
+                    startActivity(intent);
+                }
             }
         });
     }
@@ -68,6 +76,7 @@ public class HotFragment extends BaseFragment {
     }
 
     private void getData() {
+        mProgressBar.setVisibility(View.VISIBLE);
         OkHttpUtils
                 .post()
                 .url(Keys.Url_Hot)
@@ -99,12 +108,14 @@ public class HotFragment extends BaseFragment {
 
         @Override
         public void onError(Call call, Exception e) {
+            mProgressBar.setVisibility(View.GONE);
             L.i(TAG,e.getMessage());
             showToast("加载失败");
         }
 
         @Override
         public void onResponse(HotBean response) {
+            mProgressBar.setVisibility(View.GONE);
             L.i(TAG,"数据长度："+response.getShowapi_res_body().getPagebean().getSonglist().size()+"");
             /**
              * 1. 列表项布局
@@ -116,6 +127,18 @@ public class HotFragment extends BaseFragment {
 
             mGridView.setAdapter(mAdapter);
         }
+    }
+
+    public boolean isNetworkConnected(Context context) {
+        if (context != null) {
+            ConnectivityManager mConnectivityManager = (ConnectivityManager) context.
+                    getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+            if (mNetworkInfo != null) {
+                return mNetworkInfo.isAvailable();
+            }
+        }
+        return false;
     }
 
 

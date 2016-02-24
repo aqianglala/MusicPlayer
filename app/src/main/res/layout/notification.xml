@@ -11,7 +11,7 @@
     <ImageView 
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:background="@drawable/icon"/>
+        android:background="@drawable/music_default_bg"/>
     
     <LinearLayout 
         android:layout_width="0dp"
@@ -48,12 +48,12 @@
         android:layout_height="30dp"
         android:background="@drawable/icon_notification_pre"/>
 
-    <ImageButton
+    <ImageView
         android:id="@+id/btn_play"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_marginLeft="16dp"
-        android:background="@drawable/btn_audio_pause_normal"/>
+        />
     
     <Button 
         android:id="@+id/btn_next"
