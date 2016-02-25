@@ -11,8 +11,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.text.Html;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -38,7 +38,6 @@ import com.zhy.http.okhttp.callback.Callback;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 
 import okhttp3.Call;
@@ -90,6 +89,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
     private Button btn_pre;
     private Button btn_next;
     private Button btn_back;
+    private TextView tv_title;
 
     /** 连接服务 */
     private void connectServcie() {
@@ -112,6 +112,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
             @Override
             public void onServiceConnected(ComponentName name, IBinder binder) {
                 L.i(TAG, "连接成功！");
+                // 获取到服务端的信使
                 Messenger playServiceMesseger = new Messenger(binder);
                 Message message = new Message();
                 message.what = AudioPlayService.UI_INTERFACE;
@@ -135,6 +136,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
         btn_play = getViewById(R.id.btn_play);
         btn_pre = getViewById(R.id.btn_pre);
         btn_next = getViewById(R.id.btn_next);
+        tv_title = getViewById(R.id.tv_title);
         tv_artist = getViewById(R.id.tv_artist);
         tv_play_time = getViewById(R.id.tv_play_time);
         sb_audio = getViewById(R.id.sb_audio);
@@ -217,6 +219,11 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
         }
     }
 
+    @Override
+    public void removeCallbacksAndMessages(){
+        handler.removeCallbacksAndMessages(null);
+    }
+
 
     /** 切换播放模式 */
     private void switchPlayMode() {
@@ -281,6 +288,7 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
         L.i(TAG, "ui的方法被调用了");
         updatePlayBtnBg();
         setBtnEnable();
+        tv_title.setText(item.getTitle());
         tv_artist.setText(item.getArtist());
         sb_audio.setMax(playService.getDuration());
         // 下载歌词，获取歌词路径
@@ -356,18 +364,29 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
             L.i(TAG,"数据长度："+response.getShowapi_res_body().getLyric());
             //将歌词保存到本地
             String lyric = response.getShowapi_res_body().getLyric();
+            String[] split = lyric.split("&#10;");
+
             File file = new File(lrcRootPath);
             if (!file.exists()) {
                 file.mkdirs();
             }
-            String lrcPath=lrcRootPath+ mCurrentItem.getArtist()+".txt";
+            String lrcPath=lrcRootPath+ mCurrentItem.getTitle()+".txt";
             try {
-                FileWriter fw = new FileWriter(lrcPath, true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                String newLineLyric = newLineLyric(lyric);
-                bw.write(newLineLyric);
-                bw.close();
-                fw.close();
+                File lrcFile = new File(lrcPath);
+                if(!lrcFile.exists()){
+                    FileWriter fw = new FileWriter(lrcPath, true);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    for(String str: split){
+                        String s = Html.fromHtml(str).toString();
+                        if(s.startsWith("[0")){
+                            bw.write(s);
+                            bw.newLine();
+                            bw.flush();
+                        }
+                    }
+                    bw.close();
+                    fw.close();
+                }
                 lyric_view.setMusicPath(lrcPath);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -387,21 +406,21 @@ public class AudioPlayerActivity extends BaseActivity implements Ui {
      * 然后我们把offset之前的所有标签都删除，这样就能获得正确的歌词格式
      */
 
-    private String newLineLyric(String lyric){
+//    private String newLineLyric(String lyric){
 //        lyric= Html.fromHtml(lyric).toString();
-        lyric= URLDecoder.decode(lyric);
-        lyric= lyric.substring(lyric.indexOf("[00"));
-        char[] chars = lyric.toCharArray();
-        StringBuilder sb = new StringBuilder();
-        for(int i=0;i<chars.length;i++){
-            if(i!=0 && chars[i]=='[' && chars[i-1]!=']'){
-                sb.append("\r\n[");
-            }else{
-                sb.append(chars[i]);
-            }
-        }
-        Log.i("换行后:",sb.toString());
-        return sb.toString();
-    }
+//        lyric= URLDecoder.decode(lyric);
+//        lyric= lyric.substring(lyric.indexOf("[00"));
+//        char[] chars = lyric.toCharArray();
+//        StringBuilder sb = new StringBuilder();
+//        for(int i=0;i<chars.length;i++){
+//            if(i!=0 && chars[i]=='[' && chars[i-1]!=']'){
+//                sb.append("\r\n[");
+//            }else{
+//                sb.append(chars[i]);
+//            }
+//        }
+//        Log.i("换行后:",sb.toString());
+//        return sb.toString();
+//    }
 
 }

@@ -142,7 +142,7 @@ public class AudioPlayService extends Service implements PlayService {
                     audioItems = (ArrayList<AudioItem>) intent.getSerializableExtra(Keys.ITEM_LIST);
                     currentPositionTemp = intent.getIntExtra(Keys.CURRENT_POSITION, -1);
                 }
-                if (isPlaying() && currentPosition == currentPositionTemp) {
+                if (currentPosition == currentPositionTemp) {
                     // 如果音频已经在播放，并且点击进来的位置和正在播放的音频是同一个，则不要重新播放
                     openAudioFlag = NO_OPEN_AUDIO;
                 }
@@ -176,9 +176,9 @@ public class AudioPlayService extends Service implements PlayService {
             }else{
                 mMediaPlayer.setDataSource(currentAudioItem.getPath());
             }
+            mMediaPlayer.setOnCompletionListener(mCompletionListener);
             mMediaPlayer.prepareAsync();
             mMediaPlayer.setOnPreparedListener(mPreparedListener);
-//            mMediaPlayer.setOnCompletionListener(mCompletionListener);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -360,6 +360,7 @@ public class AudioPlayService extends Service implements PlayService {
 
         @Override
         public void onCompletion(MediaPlayer mp) {
+            ui.removeCallbacksAndMessages();
             next();
         }
     };

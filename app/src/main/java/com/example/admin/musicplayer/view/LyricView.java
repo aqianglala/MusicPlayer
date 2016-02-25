@@ -81,8 +81,6 @@ public class LyricView extends View {
             transaltionCanvas(canvas, highlightLyric);
         }
 
-
-
         drawLyrics(canvas, highlightLyric);
     }
 

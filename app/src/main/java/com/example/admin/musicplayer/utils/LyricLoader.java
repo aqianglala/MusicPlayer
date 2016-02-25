@@ -68,12 +68,19 @@ public class LyricLoader {
                 // System.out.println(line);
                 // 解读一行的歌词：[01:55.10][00:48.04]我不可能是你的王子
                 String[] strings = line.split("]");
-                String lyricText = strings[strings.length - 1];
-                for (int i = 0; i < strings.length - 1; i++) {
-                    // 解析：[01:55.10 这样的时间，解析成一个long类型的毫秒值
-                    long startShowTime = parseTime(strings[i]);
-                    lyrics.add(new LyricItem(startShowTime, lyricText));
+                String lyricText;
+                if(strings.length==1){
+                    lyricText=" ";
+                }else{
+                    lyricText = strings[strings.length - 1];
                 }
+                long startShowTime = parseTime(strings[0]);
+                lyrics.add(new LyricItem(startShowTime, lyricText));
+//                for (int i = 0; i < strings.length - 1; i++) {
+//                    // 解析：[01:55.10 这样的时间，解析成一个long类型的毫秒值
+//                    long startShowTime = parseTime(strings[i]);
+//                    lyrics.add(new LyricItem(startShowTime, lyricText));
+//                }
 
             }
         } catch (Exception e) {

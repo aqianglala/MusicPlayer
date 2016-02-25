@@ -73,5 +73,11 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         L.i("换行后:",sb.toString());
     }
 
+    public void testSplit(){
+        String str="[ss]";
+        String[] split = str.split("]");
+        Log.i("split",split.length+"");
+    }
+
 
 }

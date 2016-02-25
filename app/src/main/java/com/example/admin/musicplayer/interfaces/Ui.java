@@ -15,4 +15,8 @@ public interface Ui {
     /** 播放暂停 */
     void stopPlayBtnBg();
 
+    /** 停止向handler发消息 */
+    void removeCallbacksAndMessages();
+
+
 }
